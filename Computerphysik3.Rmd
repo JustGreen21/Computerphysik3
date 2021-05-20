@@ -1,7 +1,7 @@
 ---
-title: 'Übung 02: Verfahrens- und Maschinenfehler'
+title: 'Übung 03: Pandemieausbruch'
 author: "Tobias Blesgen und Leonardo Thome"
-date: "19.05.2021"
+date: "09.06.2021"
 output:
   pdf_document: default
   html_document:
@@ -22,3 +22,45 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \begin{equation}
       S'(t) = -\frac{\beta}{N}S(t)I(t) -\Gamma(t)+ \delta V(t)
 \end{equation}
+
+\begin{equation}
+      I'(t) = \frac{\beta}{N}S(t)I(t) -\alpha I(t)
+\end{equation}
+
+\begin{equation}
+      R'(t) = \alpha I(t)
+\end{equation}
+
+\begin{equation}
+      V'(t) = \Gamma(t) - \delta V(t)
+\end{equation}
+
+```{Rcpp}
+#include <Rcpp.h>
+#include <math.h>
+using namespace Rcpp;
+//[[Rcpp::export]]
+Rcpp:: double funk(double x){
+
+    return exp(x);
+}
+```
+
+```{Rcpp}
+#include <Rcpp.h>
+#include <math.h>
+using namespace Rcpp;
+//[[Rcpp::export]]
+Rcpp:: void Integrate(double start = 0., double ende = 1.){
+    int n = 10;
+    double h = (ende-start)/((double)n);
+    double x = 0;
+      
+    for (int i = 0; i<=n; i++){
+      x += h*funk(x); 
+      printf("X: %f \n", x);
+    }
+  // Rückgabe für eine grafische Wiedergabe
+   // return x;
+}
+```
