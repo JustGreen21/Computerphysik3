@@ -40,6 +40,8 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 #include<stdlib.h>
 #include<stdio.h>
 
+using namespace Rcpp;
+
 typedef struct
 {
     double S, I, R, V;
@@ -59,7 +61,7 @@ void f(Status alterStatus, Parameter parameter, Status neuerStatus){
       - parameter.Gamma + parameter.delta * alterStatus.V;
 }
 
-void rkStep(Status status, Parameter parameter, double h){
+void rkSchritt(Status status, Parameter parameter, double h){
     Status fStatus;
     f(status, parameter, fStatus);
     Status f2Status;
@@ -71,4 +73,56 @@ void rkStep(Status status, Parameter parameter, double h){
     status.S = status.S + h/2*(fStatus.S + f2Status.S);
     status.I = status.I + h/2*(fStatus.I + f2Status.I);
 }
+
+//[[Rcpp::export]]
+Rcpp::List durchlauf(const int schritte, const double h,
+                            const double S, const double I, const double R,
+                            const double V, const double alpha,
+                            const double beta, const double delta,
+                            const double N, const double Gamma){
+  // Array der Werte:
+    Rcpp::NumericVector xValue(schritte);
+    Rcpp::NumericVector SValue(schritte);
+    Rcpp::NumericVector IValue(schritte);
+    Rcpp::NumericVector RValue(schritte);
+    Rcpp::NumericVector VValue(schritte);
+  // Quelltext
+  Status status = {.S = S, .I = I, .R = R, .V = V};
+  Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .Gamma = Gamma};
+    for (int i = 0; i < schritte; i++){
+      xValue[i] = i*h;
+      SValue[i] = status.S;
+      IValue[i] = status.I;
+      RValue[i] = status.R;
+      VValue[i] = status.V;
+      rkSchritt(status, parameter, h);
+    }
+  // Rückgabe für eine grafische Wiedergabe
+    return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = SValue, Named("R") = SValue, Named("V") = VValue);
+}
 ```
+
+```{r, echo=FALSE}
+N = 8.3e7
+S = N - 5000
+I = 5000
+R = 0
+V = 0
+R0 = 2.9
+alpha = 1/7
+beta = R0 * alpha
+delta = 0
+Gamma = 0
+h = 1
+schritte = 100
+schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+```
+
+```{r, echo=FALSE}
+plot(schutzlos$x, schutzlos$S, "l", xlab = "Tage", ylab = "Gesamtfehler", col = "dark blue")
+lines(schutzlos$x, schutzlos$I, "l", col = "green")
+lines(schutzlos$x, schutzlos$R, "l", col = "red")
+legend(0.01,0.2,legend=c("2 Punkt Double", "2 Punkt Float"), col = c("dark blue", "green"), lty=1:1)
+```
+
+
