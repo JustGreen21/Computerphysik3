@@ -52,16 +52,16 @@ typedef struct
     double alpha, beta, delta, N, Gamma;
 } Parameter;
 
-void f(Status alterStatus, Parameter parameter, Status neuerStatus){
+void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
     neuerStatus.V = parameter.Gamma - parameter.delta * alterStatus.V;
     neuerStatus.R = parameter.alpha * alterStatus.I;
     neuerStatus.I = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
       - parameter.alpha * alterStatus.I;
-    neuerStatus.S = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
+    neuerStatus.S = -parameter.beta * alterStatus.S * alterStatus.I/parameter.N
       - parameter.Gamma + parameter.delta * alterStatus.V;
 }
 
-void rkSchritt(Status status, Parameter parameter, double h){
+void rkSchritt(Status& status, Parameter parameter, double h){
     Status fStatus;
     f(status, parameter, fStatus);
     Status f2Status;
@@ -89,6 +89,7 @@ Rcpp::List durchlauf(const int schritte, const double h,
   // Quelltext
   Status status = {.S = S, .I = I, .R = R, .V = V};
   Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .Gamma = Gamma};
+  
     for (int i = 0; i < schritte; i++){
       xValue[i] = i*h;
       SValue[i] = status.S;
@@ -96,9 +97,15 @@ Rcpp::List durchlauf(const int schritte, const double h,
       RValue[i] = status.R;
       VValue[i] = status.V;
       rkSchritt(status, parameter, h);
+      
+      if(status.I < 1 && i>10){
+          // Rückgabe für eine grafische Wiedergabe
+          return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = IValue,
+                              Named("R") =  RValue, Named("V") = VValue);
+      }
     }
   // Rückgabe für eine grafische Wiedergabe
-    return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = SValue, Named("R") = SValue, Named("V") = VValue);
+    return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = IValue, Named("R") = RValue, Named("V") = VValue);
 }
 ```
 
@@ -122,7 +129,7 @@ schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
 plot(schutzlos$x, schutzlos$S, "l", xlab = "Tage", ylab = "Gesamtfehler", col = "dark blue")
 lines(schutzlos$x, schutzlos$I, "l", col = "green")
 lines(schutzlos$x, schutzlos$R, "l", col = "red")
-legend(0.01,0.2,legend=c("2 Punkt Double", "2 Punkt Float"), col = c("dark blue", "green"), lty=1:1)
+legend(80,8e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
 
