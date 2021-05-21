@@ -36,31 +36,39 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \end{equation}
 
 ```{Rcpp}
-#include <Rcpp.h>
-#include <math.h>
-using namespace Rcpp;
-//[[Rcpp::export]]
-Rcpp:: double funk(double x){
+#include<Rcpp.h>
+#include<stdlib.h>
+#include<stdio.h>
 
-    return exp(x);
+typedef struct
+{
+    double S, I, R, V;
+} Status;
+
+typedef struct
+{
+    double alpha, beta, delta, N, Gamma;
+} Parameter;
+
+void f(Status alterStatus, Parameter parameter, Status neuerStatus){
+    neuerStatus.V = parameter.Gamma - parameter.delta * alterStatus.V;
+    neuerStatus.R = parameter.alpha * alterStatus.I;
+    neuerStatus.I = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
+      - parameter.alpha * alterStatus.I;
+    neuerStatus.S = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
+      - parameter.Gamma + parameter.delta * alterStatus.V;
 }
-```
 
-```{Rcpp}
-#include <Rcpp.h>
-#include <math.h>
-using namespace Rcpp;
-//[[Rcpp::export]]
-Rcpp:: void Integrate(double start = 0., double ende = 1.){
-    int n = 10;
-    double h = (ende-start)/((double)n);
-    double x = 0;
-      
-    for (int i = 0; i<=n; i++){
-      x += h*funk(x); 
-      printf("X: %f \n", x);
-    }
-  // Rückgabe für eine grafische Wiedergabe
-   // return x;
+void rkStep(Status status, Parameter parameter, double h){
+    Status fStatus;
+    f(status, parameter, fStatus);
+    Status f2Status;
+    Status gemischt = {.S = status.S + h*fStatus.S, .I = status.I
+      + h*fStatus.I, .R = status.R + h*fStatus.R, .V = status.V + h*fStatus.V};
+    f(gemischt, parameter, f2Status);
+    status.V = status.V + h/2*(fStatus.V + f2Status.V);
+    status.R = status.R + h/2*(fStatus.R + f2Status.R);
+    status.S = status.S + h/2*(fStatus.S + f2Status.S);
+    status.I = status.I + h/2*(fStatus.I + f2Status.I);
 }
 ```
