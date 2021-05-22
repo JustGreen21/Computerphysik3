@@ -39,6 +39,7 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 #include<Rcpp.h>
 #include<stdlib.h>
 #include<stdio.h>
+#include <vector>
 
 using namespace Rcpp;
 
@@ -51,6 +52,16 @@ typedef struct
 {
     double alpha, beta, delta, N, Gamma;
 } Parameter;
+
+template<typename T>
+std::vector<T> slice(std::vector<T> const &v, int m, int n)
+{
+    auto first = v.cbegin() + m;
+    auto last = v.cbegin() + n + 1;
+ 
+    std::vector<T> vec(first, last);
+    return vec;
+}
 
 void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
     neuerStatus.V = parameter.Gamma - parameter.delta * alterStatus.V;
@@ -75,22 +86,22 @@ void rkSchritt(Status& status, Parameter parameter, double h){
 }
 
 //[[Rcpp::export]]
-Rcpp::List durchlauf(const int schritte, const double h,
+Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double S, const double I, const double R,
                             const double V, const double alpha,
                             const double beta, const double delta,
                             const double N, const double Gamma){
   // Array der Werte:
-    Rcpp::NumericVector xValue(schritte);
-    Rcpp::NumericVector SValue(schritte);
-    Rcpp::NumericVector IValue(schritte);
-    Rcpp::NumericVector RValue(schritte);
-    Rcpp::NumericVector VValue(schritte);
+    std::vector<double> xValue(maxSchritte);
+    std::vector<double> SValue(maxSchritte);
+    std::vector<double> IValue(maxSchritte);
+    std::vector<double> RValue(maxSchritte);
+    std::vector<double> VValue(maxSchritte);
   // Quelltext
   Status status = {.S = S, .I = I, .R = R, .V = V};
   Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .Gamma = Gamma};
   
-    for (int i = 0; i < schritte; i++){
+    for (int i = 0; i < maxSchritte; i++){
       xValue[i] = i*h;
       SValue[i] = status.S;
       IValue[i] = status.I;
@@ -100,8 +111,11 @@ Rcpp::List durchlauf(const int schritte, const double h,
       
       if(status.I < 1 && i>10){
           // Rückgabe für eine grafische Wiedergabe
-          return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = IValue,
-                              Named("R") =  RValue, Named("V") = VValue);
+          return List::create(Named("x") = slice(xValue,0,i), 
+                              Named("S") = slice(SValue,0,i), 
+                              Named("I") = slice(IValue,0,i),
+                              Named("R") = slice(RValue,0,i), 
+                              Named("V") = slice(VValue,0,i));
       }
     }
   // Rückgabe für eine grafische Wiedergabe
@@ -121,13 +135,13 @@ beta = R0 * alpha
 delta = 0
 Gamma = 0
 h = 1
-schritte = 100
+schritte = 1000
 schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
 ```
 
 ```{r, echo=FALSE}
-plot(schutzlos$x, schutzlos$S, "l", xlab = "Tage", ylab = "Gesamtfehler", col = "dark blue")
-lines(schutzlos$x, schutzlos$I, "l", col = "green")
+plot(schutzlos$x, schutzlos$S, "l", xlab = "Tage", ylim=c(0, schutzlos$S[1]),ylab = "Menschen", col = "dark blue")
+lines(schutzlos$x, schutzlos$I, "l", col = "dark green")
 lines(schutzlos$x, schutzlos$R, "l", col = "red")
 legend(80,8e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
