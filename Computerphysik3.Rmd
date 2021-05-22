@@ -50,7 +50,7 @@ typedef struct
 
 typedef struct
 {
-    double alpha, beta, delta, N, Gamma;
+    double alpha, beta, delta, N, gamma;
 } Parameter;
 
 template<typename T>
@@ -64,12 +64,13 @@ std::vector<T> slice(std::vector<T> const &v, int m, int n)
 }
 
 void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
-    neuerStatus.V = parameter.Gamma - parameter.delta * alterStatus.V;
+  double Gamma = parametergamma;
+    neuerStatus.V = Gamma - parameter.delta * alterStatus.V;
     neuerStatus.R = parameter.alpha * alterStatus.I;
     neuerStatus.I = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
       - parameter.alpha * alterStatus.I;
     neuerStatus.S = -parameter.beta * alterStatus.S * alterStatus.I/parameter.N
-      - parameter.Gamma + parameter.delta * alterStatus.V;
+      - Gamma + parameter.delta * alterStatus.V;
 }
 
 void rkSchritt(Status& status, Parameter parameter, double h){
@@ -90,7 +91,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double S, const double I, const double R,
                             const double V, const double alpha,
                             const double beta, const double delta,
-                            const double N, const double Gamma){
+                            const double N, const double gamma){
   // Array der Werte:
     std::vector<double> xValue(maxSchritte);
     std::vector<double> SValue(maxSchritte);
@@ -99,7 +100,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
     std::vector<double> VValue(maxSchritte);
   // Quelltext
   Status status = {.S = S, .I = I, .R = R, .V = V};
-  Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .Gamma = Gamma};
+  Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .gamma = gamma};
   
     for (int i = 0; i < maxSchritte; i++){
       xValue[i] = i*h;
@@ -133,10 +134,10 @@ R0 = 2.9
 alpha = 1/7
 beta = R0 * alpha
 delta = 0
-Gamma = 0
+gamma = 0
 h = 1
 schritte = 1000
-schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
 ```
 
 ```{r, echo=FALSE}
@@ -161,18 +162,18 @@ R0 = 15
 alpha = 1/7
 beta = R0 * alpha
 delta = 0
-Gamma = 0
+gamma = 0
 h = 1
 schritte = 1000
 
-schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
 plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 5.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
 
 range <- 1:20
 
 for (R1 in range) {
   beta = R1 * alpha
-  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
   lines(schutzlos$x, schutzlos$I, "l", col = rainbow(20)[R1])
 }
 
