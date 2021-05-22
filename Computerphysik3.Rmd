@@ -136,14 +136,47 @@ delta = 0
 Gamma = 0
 h = 1
 schritte = 1000
-schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
 ```
 
 ```{r, echo=FALSE}
-plot(schutzlos$x, schutzlos$S, "l", xlab = "Tage", ylim=c(0, schutzlos$S[1]),ylab = "Menschen", col = "dark blue")
-lines(schutzlos$x, schutzlos$I, "l", col = "dark green")
-lines(schutzlos$x, schutzlos$R, "l", col = "red")
-legend(80,8e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
+plot(schutzlos1$x, schutzlos1$S, "l", xlab = "Tage", ylim=c(0, schutzlos1$S[1]),ylab = "Menschen", col = "dark blue")
+lines(schutzlos1$x, schutzlos1$I, "l", col = "dark green")
+lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
+legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
+Betrachten wir nun die Kurven für $R_0 \in [1,20]$.
+
+```{r, echo=FALSE}
+
+pal <- colorRamp(c("red", "blue"))
+
+N = 8.3e7
+S = N - 5000
+I = 5000
+R = 0
+V = 0
+R0 = 15
+alpha = 1/7
+beta = R0 * alpha
+delta = 0
+Gamma = 0
+h = 1
+schritte = 1000
+
+schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 5.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
+
+range <- 1:20
+
+for (R1 in range) {
+  beta = R1 * alpha
+  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, Gamma)
+  lines(schutzlos$x, schutzlos$I, "l", col = rainbow(20)[R1])
+}
+
+legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainbow(20)[1], rainbow(20)[7], rainbow(20)[14], rainbow(20)[20]), lty=1:1)
+
+```
 
