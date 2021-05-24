@@ -39,7 +39,8 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 #include<Rcpp.h>
 #include<stdlib.h>
 #include<stdio.h>
-#include <vector>
+#include<vector>
+#include<algorithm>
 
 using namespace Rcpp;
 
@@ -64,7 +65,7 @@ std::vector<T> slice(std::vector<T> const &v, int m, int n)
 }
 
 void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
-  double Gamma = parametergamma;
+  double Gamma = std::min(parameter.gamma,alterStatus.I);
     neuerStatus.V = Gamma - parameter.delta * alterStatus.V;
     neuerStatus.R = parameter.alpha * alterStatus.I;
     neuerStatus.I = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
@@ -91,7 +92,8 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double S, const double I, const double R,
                             const double V, const double alpha,
                             const double beta, const double delta,
-                            const double N, const double gamma){
+                            const double N, const double gamma,
+                            const double x0){
   // Array der Werte:
     std::vector<double> xValue(maxSchritte);
     std::vector<double> SValue(maxSchritte);
@@ -103,7 +105,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
   Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .gamma = gamma};
   
     for (int i = 0; i < maxSchritte; i++){
-      xValue[i] = i*h;
+      xValue[i] = x0 + i*h;
       SValue[i] = status.S;
       IValue[i] = status.I;
       RValue[i] = status.R;
@@ -137,7 +139,7 @@ delta = 0
 gamma = 0
 h = 1
 schritte = 1000
-schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
+schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma, 0)
 ```
 
 ```{r, echo=FALSE}
@@ -166,14 +168,14 @@ gamma = 0
 h = 1
 schritte = 1000
 
-schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
+schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
 plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 5.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
 
 range <- 1:20
 
 for (R1 in range) {
   beta = R1 * alpha
-  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma)
+  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
   lines(schutzlos$x, schutzlos$I, "l", col = rainbow(20)[R1])
 }
 
@@ -181,3 +183,64 @@ legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainb
 
 ```
 
+### Mit Gegenmaßnahmen
+
+Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
+            $\gamma$          Tag        $\mathrm{N}_0$      
+Januar:     40665             3
+Februar:    49890             37
+März:       208569            71
+April:      323200            110
+Mai:        390904            142
+
+verwendet.
+
+```{r, echo=FALSE}
+N = 8.3e7
+I = 349500
+R = 1765666-I
+V = 238809
+S = N - I - R - V
+
+alpha = 1/7
+delta = 1/15
+
+R0 <-c(2,2,2,2,2)
+gamma <-c(40665,49890,208569,323200,390904)
+tage <-c(3,37,71,110,142)
+
+h = 1
+
+schutz0 = durchlauf((tage[1]-tage[0])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+schutz2 = durchlauf((tage[3]-tage[2])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+schutz3 = durchlauf((tage[4]-tage[3])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+schutz4 = durchlauf(500, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+
+```
+
+```{r, echo=FALSE}
+plot(schutzlos3$x, schutzlos3$S, "l", xlab = "Tage", ylim=c(0, schutzlos3$S[1]),ylab = "Menschen", col = "dark blue")
+lines(schutzlos3$x, schutzlos3$I, "l", col = "dark green")
+lines(schutzlos3$x, schutzlos3$R, "l", col = "red")
+lines(schutzlos3$x, schutzlos3$V, "l", col = "blue")
+legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
+```
+
+\begin{thebibliography}{99}
+\bibitem{januar} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Jan_2021/2021-01-03-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+
+\bibitem{februar} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Feb_2021/2021-02-06-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+
+\bibitem{maerz} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Maerz_2021/2021-03-12-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+
+\bibitem{april} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Apr_2021/2021-04-20-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+
+\bibitem{mai} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Mai_2021/2021-05-22-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+
+\end{thebibliography}
