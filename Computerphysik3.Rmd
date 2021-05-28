@@ -93,7 +93,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double V, const double alpha,
                             const double beta, const double delta,
                             const double N, const double gamma,
-                            const double x0){
+                            const double x0,const int I_min = 1){
   // Array der Werte:
     std::vector<double> xValue(maxSchritte);
     std::vector<double> SValue(maxSchritte);
@@ -112,7 +112,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
       VValue[i] = status.V;
       rkSchritt(status, parameter, h);
       
-      if(status.I < 1 && i>10){
+      if(status.I < I_min && i>10){
           // Rückgabe für eine grafische Wiedergabe
           return List::create(Named("x") = slice(xValue,0,i), 
                               Named("S") = slice(SValue,0,i), 
@@ -124,6 +124,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
   // Rückgabe für eine grafische Wiedergabe
     return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = IValue, Named("R") = RValue, Named("V") = VValue);
 }
+
 ```
 
 ```{r, echo=FALSE}
@@ -212,7 +213,7 @@ S = N - I - R - V
 alpha = 1/7
 delta = 1/150
 
-R0 <-c(5,1.2,1.2,1.2,1.2)
+R0 <-c(0.91,0.972,1.292,1.1,1.1)
 gamma <-c(40665,49890,208569,323200,390904)
 tage <-c(3,37,71,110,142)
 h = 1
@@ -237,14 +238,46 @@ schutz5 = durchlauf(500, h, schutz4$S[length(schutz4$S)],
 
 schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,schutz5$x) ) ) )
 schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,schutz5$I) ) ) )
+schutzS = append(schutz1$S, append(schutz2$S, append(schutz3$S, append(schutz4$S,schutz5$S) ) ) )
 
 
 #Vergleich
+tage <-c(3,15,121)
+R0h <-c(0.91,0.5,1.2)
+hypothese1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
+hypothese2 = durchlauf((tage[3]-tage[2])/h,h, hypothese1$S[length(hypothese1$S)], 
+                    hypothese1$I[length(hypothese1$I)], hypothese1$R[length(hypothese1$R)], 
+                    hypothese1$V[length(hypothese1$V)], alpha, R0[2] * alpha, delta, N, gamma[1], tage[2], I_min = 10000)
+
+hypotheseI1 = append(hypothese1$I,hypothese2$I)
+
+if(tail(hypothese2$I,n=1) > 10000){
+  hypothese3 = durchlauf(500, h, hypothese2$S[length(hypothese2$S)], 
+                    hypothese2$I[length(hypothese2$I)], hypothese2$R[length(hypothese2$R)], 
+                    hypothese2$V[length(hypothese2$V)], alpha, 0.8* R0[2] * alpha, delta, N, gamma[1], tage[3], I_min = 10000)
+  
+  hypothese4 = durchlauf(500, h, hypothese3$S[length(hypothese3$S)], 
+                    hypothese3$I[length(hypothese3$I)], hypothese3$R[length(hypothese3$R)], 
+                    hypothese3$V[length(hypothese3$V)], alpha, 0.8*R0[3] * alpha, delta, N, gamma[2], tage[3]+length(hypothese3$x))
+}else{
+  hypothese3 = durchlauf(tage[3]/h-length(hypotheseI1), h, hypothese2$S[length(hypothese2$S)], 
+                    hypothese2$I[length(hypothese2$I)], hypothese2$R[length(hypothese2$R)], 
+                    hypothese2$V[length(hypothese2$V)], alpha, R0[3] * alpha, delta, N, gamma[2],length(hypotheseI1)/h)
+  hypothese4 = durchlauf(500, h,hypothese3$S[length(hypothese3$S)], 
+                    hypothese3$I[length(hypothese3$I)], hypothese3$R[length(hypothese3$R)], 
+                    hypothese3$V[length(hypothese3$V)], alpha, 0.8*R0[3] * alpha, delta, N, gamma[2],tage[3])
+}
+hypothesex = append(hypothese1$x, append(hypothese2$x, append(hypothese3$x,hypothese4$x) ) )
+hypotheseI = append(hypothese1$I, append(hypothese2$I, append(hypothese3$I,hypothese4$I) ) )
+hypotheseS = append(hypothese1$S, append(hypothese2$S, append(hypothese3$S,hypothese4$S) ) )
+
+
 
 ```
 
 ```{r, echo=FALSE}
 plot(schutzx, schutzI, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
+lines(hypothesex,hypotheseI,"l", col = " red")
 
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
