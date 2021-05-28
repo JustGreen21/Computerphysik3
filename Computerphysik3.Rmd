@@ -205,25 +205,37 @@ S = N - I - R - V
 alpha = 1/7
 delta = 1/15
 
-R0 <-c(2,2,2,2,2)
+R0 <-c(5,1.2,1.2,1.2,1.2)
 gamma <-c(40665,49890,208569,323200,390904)
 tage <-c(3,37,71,110,142)
-
 h = 1
 
-schutz0 = durchlauf((tage[1]-tage[0])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
-schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
-schutz2 = durchlauf((tage[3]-tage[2])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
-schutz3 = durchlauf((tage[4]-tage[3])/h, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
-schutz4 = durchlauf(500, h, S, I, R, V, alpha, R[0] * alpha, delta, N, gamma[0], tage[0])
+schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
+
+schutz2 = durchlauf((tage[3]-tage[2])/h, h, schutz1$S[length(schutz1$S)], 
+                    schutz1$I[length(schutz1$I)], schutz1$R[length(schutz1$R)], 
+                    schutz1$V[length(schutz1$V)], alpha, R0[2] * alpha, delta, N, gamma[2], tage[2])
+
+schutz3 = durchlauf((tage[4]-tage[3])/h, h, schutz2$S[length(schutz2$S)], 
+                    schutz2$I[length(schutz2$I)], schutz2$R[length(schutz2$R)], 
+                    schutz2$V[length(schutz2$V)], alpha, R0[3] * alpha, delta, N, gamma[3], tage[3])
+
+schutz4 = durchlauf((tage[5]-tage[4])/h, h, schutz3$S[length(schutz3$S)], 
+                    schutz3$I[length(schutz3$I)], schutz3$R[length(schutz3$R)], 
+                    schutz3$V[length(schutz3$V)], alpha, R0[4] * alpha, delta, N, gamma[4], tage[4])
+
+schutz5 = durchlauf(500, h, schutz4$S[length(schutz4$S)], 
+                    schutz4$I[length(schutz4$I)], schutz4$R[length(schutz4$R)], 
+                    schutz4$V[length(schutz4$V)], alpha, R0[5] * alpha, delta, N, gamma[5], tage[5])
+
+schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,schutz5$x) ) ) )
+schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,schutz5$I) ) ) )
 
 ```
 
 ```{r, echo=FALSE}
-plot(schutzlos3$x, schutzlos3$S, "l", xlab = "Tage", ylim=c(0, schutzlos3$S[1]),ylab = "Menschen", col = "dark blue")
-lines(schutzlos3$x, schutzlos3$I, "l", col = "dark green")
-lines(schutzlos3$x, schutzlos3$R, "l", col = "red")
-lines(schutzlos3$x, schutzlos3$V, "l", col = "blue")
+plot(schutzx, schutzI, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
+
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
