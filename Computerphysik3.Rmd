@@ -165,33 +165,40 @@ alpha = 1/7
 beta = R0 * alpha
 delta = 0
 gamma = 0
-h = 1
-schritte = 1000
+h = 0.01
+schritte = 50000
 
 schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
-plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 5.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
+plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 6.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
 
 range <- 1:20
+nicht_infizierte <- 1:20 
 
 for (R1 in range) {
   beta = R1 * alpha
   schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
   lines(schutzlos$x, schutzlos$I, "l", col = rainbow(20)[R1])
+  nicht_infizierte[R1] = schutzlos$S[length(schutzlos$S)]
 }
 
 legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainbow(20)[1], rainbow(20)[7], rainbow(20)[14], rainbow(20)[20]), lty=1:1)
+
+print(range)
+print(nicht_infizierte)
+
+plot(1/range, nicht_infizierte/N,"l", xlab = "1/R0", ylab = "S/N")
 
 ```
 
 ### Mit Gegenmaßnahmen
 
 Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
-            $\gamma$          Tag        $\mathrm{N}_0$      
-Januar:     40665             3
-Februar:    49890             37
-März:       208569            71
-April:      323200            110
-Mai:        390904            142
+            $\gamma$          Tag        aktive Fälle      
+Januar:     40665             3           349500
+Februar:    49890             37          193200
+März:       208569            71          127100
+April:      323200            110         279400
+Mai:        390904            142         167100
 
 verwendet.
 
@@ -203,7 +210,7 @@ V = 238809
 S = N - I - R - V
 
 alpha = 1/7
-delta = 1/15
+delta = 1/150
 
 R0 <-c(5,1.2,1.2,1.2,1.2)
 gamma <-c(40665,49890,208569,323200,390904)
@@ -231,6 +238,9 @@ schutz5 = durchlauf(500, h, schutz4$S[length(schutz4$S)],
 schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,schutz5$x) ) ) )
 schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,schutz5$I) ) ) )
 
+
+#Vergleich
+
 ```
 
 ```{r, echo=FALSE}
@@ -241,18 +251,18 @@ legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=
 
 \begin{thebibliography}{99}
 \bibitem{januar} 
-\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Jan_2021/2021-01-03-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Jan_2021/2021-01-03-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
 
 \bibitem{februar} 
-\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Feb_2021/2021-02-06-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Feb_2021/2021-02-06-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
 
 \bibitem{maerz} 
-\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Maerz_2021/2021-03-12-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Maerz_2021/2021-03-12-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
 
 \bibitem{april} 
-\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Apr_2021/2021-04-20-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Apr_2021/2021-04-20-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
 
 \bibitem{mai} 
-\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, ``https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Mai_2021/2021-05-22-de.pdf?__blob=publicationFile``, Stand: 24.05.2021.
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Mai_2021/2021-05-22-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
 
 \end{thebibliography}
