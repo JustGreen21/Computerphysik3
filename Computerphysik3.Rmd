@@ -272,7 +272,6 @@ hypotheseI = append(hypothese1$I, append(hypothese2$I, append(hypothese3$I,hypot
 hypotheseS = append(hypothese1$S, append(hypothese2$S, append(hypothese3$S,hypothese4$S) ) )
 
 
-
 ```
 
 ```{r, echo=FALSE}
