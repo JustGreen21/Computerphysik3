@@ -196,10 +196,11 @@ plot(1/range, nicht_infizierte/N,"l", xlab = "1/R0", ylab = "S/N")
 Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
             $\gamma$          Tag        aktive Fälle      
 Januar:     40665             3           349500
-Februar:    49890             37          193200
-März:       208569            71          127100
-April:      323200            110         279400
-Mai:        390904            142         167100
+Februar:    61132             37          193200
+März:       60776             71          127100
+April:      57895             110         279400
+Mai:        406455            142         167100
+Juni:       337478            152         95900
 
 verwendet.
 
@@ -213,9 +214,9 @@ S = N - I - R - V
 alpha = 1/7
 delta = 1/150
 
-R0 <-c(0.91,0.972,1.292,1.1,1.1)
-gamma <-c(40665,49890,208569,323200,390904)
-tage <-c(3,37,71,110,142)
+R0 <-c(0.91,0.974,1.2633,1.005,0.655,1.1)
+gamma <-c(40665,61132,60776,57895,406455,337478)
+tage <-c(3,37,71,110,142,152)
 h = 1
 
 schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
@@ -232,14 +233,25 @@ schutz4 = durchlauf((tage[5]-tage[4])/h, h, schutz3$S[length(schutz3$S)],
                     schutz3$I[length(schutz3$I)], schutz3$R[length(schutz3$R)], 
                     schutz3$V[length(schutz3$V)], alpha, R0[4] * alpha, delta, N, gamma[4], tage[4])
 
-schutz5 = durchlauf(500, h, schutz4$S[length(schutz4$S)], 
+schutz5 = durchlauf((tage[6]-tage[5])/h, h, schutz4$S[length(schutz4$S)], 
                     schutz4$I[length(schutz4$I)], schutz4$R[length(schutz4$R)], 
                     schutz4$V[length(schutz4$V)], alpha, R0[5] * alpha, delta, N, gamma[5], tage[5])
 
-schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,schutz5$x) ) ) )
-schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,schutz5$I) ) ) )
-schutzS = append(schutz1$S, append(schutz2$S, append(schutz3$S, append(schutz4$S,schutz5$S) ) ) )
 
+schutz6 = durchlauf(500, h, schutz5$S[length(schutz5$S)], 
+                    schutz5$I[length(schutz5$I)], schutz5$R[length(schutz5$R)], 
+                    schutz5$V[length(schutz5$V)], alpha, R0[6] * alpha, delta, N, gamma[6], tage[6])
+
+
+schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,append(schutz5$x,schutz6$x) ) ) ) )
+schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,append(schutz5$I,schutz6$I)) ) ) )
+schutzS = append(schutz1$S, append(schutz2$S, append(schutz3$S, append(schutz4$S,append(schutz5$S,schutz6$S)) ) ) )
+
+print(schutzI[37-2])
+print(schutzI[71-2])
+print(schutzI[110-2])
+print(schutzI[142-2])
+print(schutzI[152-2])
 
 #Vergleich
 tage <-c(3,15,121)
