@@ -36,6 +36,20 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \end{equation}
 Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen. Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen ANSTECKBARZEIT (?), $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
 
+# Lunge Jutta Verfahren
+
+Um die differenziellen Gleichungssysteme auszuwerten, verwenden wir das Runge-Kutta Verfahren nach
+
+\begin{equation}
+  x_{i+1} = x_i + \frac{h}{2}[f(t_i, x_i) + f(t_i+h, x_i+h f(t_i,x_i))]
+\end{equation}
+
+Wobei sich in unserem f aus den vier Anteilen von S, I, R und V zusammensetzt. Wir werden die Auswirkungen der Schrittweite am Ende der Auswertung genauer betrachten.
+
+# Implementation
+
+
+
 ```{Rcpp}
 #include<Rcpp.h>
 #include<stdlib.h>
@@ -45,6 +59,7 @@ Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken
 
 using namespace Rcpp;
 
+// Wir verwenden Strukturen um Funktionsargumente uebersichtlicher zu halten
 typedef struct
 {
     double S, I, R, V;
@@ -55,6 +70,7 @@ typedef struct
     double alpha, beta, delta, N, gamma;
 } Parameter;
 
+// Template zum zerschneiden der verwendeten Vektoren
 template<typename T>
 std::vector<T> slice(std::vector<T> const &v, int m, int n)
 {
@@ -65,6 +81,7 @@ std::vector<T> slice(std::vector<T> const &v, int m, int n)
     return vec;
 }
 
+// Berechnung der Ableitungen nach den DGL
 void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
   double Gamma = std::min(parameter.gamma,alterStatus.I);
     neuerStatus.V = Gamma - parameter.delta * alterStatus.V;
@@ -75,10 +92,11 @@ void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
       - Gamma + parameter.delta * alterStatus.V;
 }
 
+// Ein Intergrationsschritt nach Runge-Kutta
 void rkSchritt(Status& status, Parameter parameter, double h){
-    Status fStatus;
+    Status fStatus;                 // Standart Ableitung
     f(status, parameter, fStatus);
-    Status f2Status;
+    Status f2Status;                // Mischterm Ableitung
     Status gemischt = {.S = status.S + h*fStatus.S, .I = status.I
       + h*fStatus.I, .R = status.R + h*fStatus.R, .V = status.V + h*fStatus.V};
     f(gemischt, parameter, f2Status);
@@ -95,7 +113,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double beta, const double delta,
                             const double N, const double gamma,
                             const double x0,const int I_min = 1){
-  // Array der Werte:
+  // Arrays der Werte zur späteren Ausgabe
     std::vector<double> xValue(maxSchritte);
     std::vector<double> SValue(maxSchritte);
     std::vector<double> IValue(maxSchritte);
@@ -104,7 +122,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
   // Quelltext
   Status status = {.S = S, .I = I, .R = R, .V = V};
   Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .gamma = gamma};
-  
+  // Schleife bis zur Abbruchsbedingung
     for (int i = 0; i < maxSchritte; i++){
       xValue[i] = x0 + i*h;
       SValue[i] = status.S;
@@ -112,22 +130,28 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
       RValue[i] = status.R;
       VValue[i] = status.V;
       rkSchritt(status, parameter, h);
-      
+  // Vorzeitige Abbruchbedingung    
       if(status.I < I_min && i>10){
           // Rückgabe für eine grafische Wiedergabe
           return List::create(Named("x") = slice(xValue,0,i), 
                               Named("S") = slice(SValue,0,i), 
                               Named("I") = slice(IValue,0,i),
                               Named("R") = slice(RValue,0,i), 
-                              Named("V") = slice(VValue,0,i));
+                              Named("V") = slice(VValue,0,i)
+          );
       }
     }
   // Rückgabe für eine grafische Wiedergabe
-    return List::create(Named("x") = xValue, Named("S") = SValue, Named("I") = IValue, Named("R") = RValue, Named("V") = VValue);
+    return List::create(Named("x") = xValue, Named("S") = SValue, 
+                        Named("I") = IValue, Named("R") = RValue, 
+                        Named("V") = VValue
+    );
 }
 
 ```
 
+# Auswertung
+## Ohne Gegenmaßnahmen
 ```{r, echo=FALSE}
 N = 8.3e7
 S = N - 5000
@@ -144,16 +168,16 @@ schritte = 1000
 schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma, 0)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.cap="\\label{fig:std} Entwicklungskurven"}
 plot(schutzlos1$x, schutzlos1$S, "l", xlab = "Tage", ylim=c(0, schutzlos1$S[1]),ylab = "Menschen", col = "dark blue")
 lines(schutzlos1$x, schutzlos1$I, "l", col = "dark green")
 lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
-Betrachten wir nun die Kurven für $R_0 \in [1,20]$.
+Abb. \ref{fig:std} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:LSD} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für eine echten Krankheitsverlauf würde Ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.cap="\\label{fig:LSD} $R_0$ abhängige Infektionsverläufe"}
 
 pal <- colorRamp(c("red", "blue"))
 
@@ -184,17 +208,22 @@ for (R1 in range) {
 }
 
 legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainbow(20)[1], rainbow(20)[7], rainbow(20)[14], rainbow(20)[20]), lty=1:1)
+```
 
-print(range)
-print(nicht_infizierte)
+```{r, echo=FALSE, fig.cap="\\label{fig:Herde} R_0 abhänginge Herdenimmunität"}
 
-plot(1/range, nicht_infizierte/N,"l", xlab = "1/R0", ylab = "S/N")
+plot(1/range, nicht_infizierte/N,"p", xlab = "1/R0", ylab = "S/N", col="blue")
+lines(1/range,1/range,col="gray")
 
 ```
 
-### Mit Gegenmaßnahmen
+Jo Abb. \ref{fig:Herde} nimmt uns ziemlich Hops!
+
+## Mit Gegenmaßnahmen
 
 Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
+
+WIE MACHT MAN TABELLEN?
             $\gamma$          Tag        aktive Fälle      
 Januar:     40665             3           349500
 Februar:    61132             37          193200
@@ -203,7 +232,7 @@ April:      57895             110         279400
 Mai:        406455            142         167100
 Juni:       337478            152         95900
 
-verwendet.
+verwendet. $\frac{1}{\delta}$ wird auf 150 Tage gesetzt.
 
 ```{r, echo=FALSE}
 N = 8.3e7
@@ -286,7 +315,7 @@ hypotheseS = append(hypothese1$S, append(hypothese2$S, append(hypothese3$S,hypot
 
 
 ```
-
+ok
 ```{r, echo=FALSE}
 plot(schutzx, schutzI, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
 lines(hypothesex,hypotheseI,"l", col = " red")
