@@ -214,6 +214,7 @@ legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainb
 
 plot(1/range, nicht_infizierte/N,"p", xlab = "1/R0", ylab = "S/N", col="blue")
 lines(1/range,1/range,col="gray")
+legend(0.05,1,legend=c("Simulation", "Erwartung"), col=c("blue","gray"), lty=1:1)
 
 ```
 
@@ -320,8 +321,12 @@ ok
 plot(schutzx, schutzI, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
 lines(hypothesex,hypotheseI,"l", col = " red")
 
-legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
+legend(350,3e5,legend=c("realer Verlauf","alternativer Verlauf"), col = c("dark blue","red"), lty=1:1)
 ```
+
+# Fazit
+
+Machen wir sowas überhaupt?
 
 \begin{thebibliography}{99}
 \bibitem{januar} 
