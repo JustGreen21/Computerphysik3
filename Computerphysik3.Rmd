@@ -160,7 +160,7 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
 # Auswertung
 ## Pandemieverlauf Ohne Gegenmaßnahmen
 
-Für den Ausgebruch einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
+Für den Ausbruch einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
 $N = 8.3*10^7$, $S(0) = N - 5000$, $I(0) = 5000$, und $R(0) = V(0) = 5000$.\\
 Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS_CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$, so ergibt sich Abb. \ref{fig:grundEntwicklung}.
 ```{r, echo=FALSE}
@@ -190,9 +190,9 @@ lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
-Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR0} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für einen echten Krankheitsverlauf würde ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
+Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für einen echten Krankheitsverlauf würde ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
 
-```{r, echo=FALSE, fig.cap="\\label{fig:EntwicklungVarR0} $R_0$ abhängige Infektionsverläufe"}
+```{r, echo=FALSE, fig.cap="\\label{fig:EntwicklungVarR} $R_0$ abhängige Infektionsverläufe"}
 
 #Farbskala
 pal <- colorRamp(c("red", "blue"))
@@ -234,12 +234,13 @@ for (R1 in range) {
   nicht_infizierte[R1] = schutzlos$S[length(schutzlos$S)]
 }
 ```
+
 Nun wollen wir noch prüfen, ob sich die Verläufe nach der Herdenimunität verhalten. 
 Diese ist gegeben durch: 
 \begin{equation}
   \frac{S}{N} = \frac{1}{R_0}
 \end{equation}
-Dazu tragen wir am Ende der Pandemie (d.h.$I(t) < 0$) das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gesammtbevölkerung $N$ in Abhänigkeit von $R_0$ auf. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Kurvenverlauf. 
+Dazu tragen wir am Ende der Pandemie (d.h.$I(t) < 1$) das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gesammtbevölkerung $N$ in Abhänigkeit von $R_0$ auf. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Kurvenverlauf. 
 
 ```{r, echo=FALSE, fig.cap="\\label{fig:Herde} $R_0$ abhänginge Herdenimmunität"}
 
@@ -250,7 +251,7 @@ legend(0.05,1,legend=c("Simulation", "Erwartung nach Herdenimunität"), col=c("b
 ```
 
 In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf, deutlich von der Herdenimunität abweicht.
-Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR0} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt wurden und damit keinen neuen Wirte mehr vorhanden sind.
+Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt wurden und damit keinen neuen Wirte mehr vorhanden sind.
 Diese kleine Menge an "gesunden" Menschen nach der Pandiemie erklärt die größe Abweichung zur Herdenimunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkrankt waren.
 Es ist jedoch zu erwähnen, dass die Simualtion ihre Schwächen hat, da durch keine Gegenmaßnahmen das Infektionswesen wärend der ganzen Zeit für größe $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimunität nähern.    
 
@@ -277,7 +278,10 @@ Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
 
 verwendet. $\frac{1}{\delta}$ wird auf 150 Tage gesetzt.
 
+Um den Verlauf der Pandemie möglich realitätsnah zu Simulieren, wurden die $R_0$ werte so angepasst, dass die aktiven Fälle der Simulation zum jeweiliegen Zeitpunkt (der Daten) mit den Daten des RKI in näherung übereinstimmt. Abweichung von $\Delta I = 300$ wurden als vernachlässigbar klein angenommen, da $I \gg \Delta I$ ist im betrachtetem Bereich.
+
 ```{r, echo=FALSE}
+# Anfangsbedingungen 
 N = 8.3e7
 I = 349500
 R = 1765666-I
@@ -290,45 +294,74 @@ delta = 1/150
 R0 <-c(0.91,0.974,1.2633,1.005,0.655,1.1)
 gamma <-c(40665,61132,60776,57895,406455,337478)
 tage <-c(3,37,71,110,142,152)
-h = 1
 
-schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
+#Berechnung der einezelnen Teilverläufe für eine Schrittweite h
+verlaufmitschritt <- function(h){
+      
+      schutz1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
+      
+      schutz2 = durchlauf((tage[3]-tage[2])/h, h, schutz1$S[length(schutz1$S)], 
+                          schutz1$I[length(schutz1$I)], schutz1$R[length(schutz1$R)], 
+                          schutz1$V[length(schutz1$V)], alpha, R0[2] * alpha, delta, N, gamma[2], tage[2])
+      
+      schutz3 = durchlauf((tage[4]-tage[3])/h, h, schutz2$S[length(schutz2$S)], 
+                          schutz2$I[length(schutz2$I)], schutz2$R[length(schutz2$R)], 
+                          schutz2$V[length(schutz2$V)], alpha, R0[3] * alpha, delta, N, gamma[3], tage[3])
+      
+      schutz4 = durchlauf((tage[5]-tage[4])/h, h, schutz3$S[length(schutz3$S)], 
+                          schutz3$I[length(schutz3$I)], schutz3$R[length(schutz3$R)], 
+                          schutz3$V[length(schutz3$V)], alpha, R0[4] * alpha, delta, N, gamma[4], tage[4])
+      
+      schutz5 = durchlauf((tage[6]-tage[5])/h, h, schutz4$S[length(schutz4$S)], 
+                          schutz4$I[length(schutz4$I)], schutz4$R[length(schutz4$R)], 
+                          schutz4$V[length(schutz4$V)], alpha, R0[5] * alpha, delta, N, gamma[5], tage[5])
+      
+      
+      schutz6 = durchlauf(500, h, schutz5$S[length(schutz5$S)], 
+                          schutz5$I[length(schutz5$I)], schutz5$R[length(schutz5$R)], 
+                          schutz5$V[length(schutz5$V)], alpha, R0[6] * alpha, delta, N, gamma[6], tage[6])
+      
+      
+      schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,append(schutz5$x,schutz6$x) ) ) ) )
+      schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,append(schutz5$I,schutz6$I) ) ) ) )
+      
+      # Kontrollwerte zum Einstellen von R0
+      # print(schutzI[(37-2)/h])
+      # print(schutzI[(71-2)/h])
+      # print(schutzI[(110-2)/h])
+      # print(schutzI[(142-2)/h])
+      # print(schutzI[(152-2)/h])
+      
+      return(c(schutzx, schutzI))
+}
 
-schutz2 = durchlauf((tage[3]-tage[2])/h, h, schutz1$S[length(schutz1$S)], 
-                    schutz1$I[length(schutz1$I)], schutz1$R[length(schutz1$R)], 
-                    schutz1$V[length(schutz1$V)], alpha, R0[2] * alpha, delta, N, gamma[2], tage[2])
+#Verlauf für Verschiedene Schrittweiten h
+verlauf1 = verlaufmitschritt(h = 1)
 
-schutz3 = durchlauf((tage[4]-tage[3])/h, h, schutz2$S[length(schutz2$S)], 
-                    schutz2$I[length(schutz2$I)], schutz2$R[length(schutz2$R)], 
-                    schutz2$V[length(schutz2$V)], alpha, R0[3] * alpha, delta, N, gamma[3], tage[3])
+verlauf2 = verlaufmitschritt(h = 2)
 
-schutz4 = durchlauf((tage[5]-tage[4])/h, h, schutz3$S[length(schutz3$S)], 
-                    schutz3$I[length(schutz3$I)], schutz3$R[length(schutz3$R)], 
-                    schutz3$V[length(schutz3$V)], alpha, R0[4] * alpha, delta, N, gamma[4], tage[4])
+verlauf05 = verlaufmitschritt(h = 0.5)
 
-schutz5 = durchlauf((tage[6]-tage[5])/h, h, schutz4$S[length(schutz4$S)], 
-                    schutz4$I[length(schutz4$I)], schutz4$R[length(schutz4$R)], 
-                    schutz4$V[length(schutz4$V)], alpha, R0[5] * alpha, delta, N, gamma[5], tage[5])
+verlauf001 = verlaufmitschritt(h = 0.01)
 
+#Aufteilen der Ergebnisse in x und I Teil
+verlauf1x = verlauf1[1:(length(verlauf1)/2)]
+verlauf1I = verlauf1[(length(verlauf1)/2 + 1):length(verlauf1)]
 
-schutz6 = durchlauf(500, h, schutz5$S[length(schutz5$S)], 
-                    schutz5$I[length(schutz5$I)], schutz5$R[length(schutz5$R)], 
-                    schutz5$V[length(schutz5$V)], alpha, R0[6] * alpha, delta, N, gamma[6], tage[6])
+verlauf2x = verlauf2[1:(length(verlauf2)/2)]
+verlauf2I = verlauf2[(length(verlauf2)/2 + 1):length(verlauf2)]
 
+verlauf05x = verlauf05[1:(length(verlauf05)/2)]
+verlauf05I = verlauf05[(length(verlauf05)/2 + 1):length(verlauf05)]
 
-schutzx = append(schutz1$x, append(schutz2$x, append(schutz3$x, append(schutz4$x,append(schutz5$x,schutz6$x) ) ) ) )
-schutzI = append(schutz1$I, append(schutz2$I, append(schutz3$I, append(schutz4$I,append(schutz5$I,schutz6$I)) ) ) )
-schutzS = append(schutz1$S, append(schutz2$S, append(schutz3$S, append(schutz4$S,append(schutz5$S,schutz6$S)) ) ) )
+verlauf001x = verlauf001[1:(length(verlauf001)/2)]
+verlauf001I = verlauf001[(length(verlauf001)/2 + 1):length(verlauf001)]
 
-print(schutzI[37-2])
-print(schutzI[71-2])
-print(schutzI[110-2])
-print(schutzI[142-2])
-print(schutzI[152-2])
 
 #Vergleich
 tage <-c(3,15,121)
 R0h <-c(0.91,0.5,1.2)
+h = 0.01 
 hypothese1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
 hypothese2 = durchlauf((tage[3]-tage[2])/h,h, hypothese1$S[length(hypothese1$S)], 
                     hypothese1$I[length(hypothese1$I)], hypothese1$R[length(hypothese1$R)], 
@@ -337,33 +370,35 @@ hypothese2 = durchlauf((tage[3]-tage[2])/h,h, hypothese1$S[length(hypothese1$S)]
 hypotheseI1 = append(hypothese1$I,hypothese2$I)
 
 if(tail(hypothese2$I,n=1) > 10000){
-  hypothese3 = durchlauf(500, h, hypothese2$S[length(hypothese2$S)], 
+  hypothese3 = durchlauf(500/h, h, hypothese2$S[length(hypothese2$S)], 
                     hypothese2$I[length(hypothese2$I)], hypothese2$R[length(hypothese2$R)], 
                     hypothese2$V[length(hypothese2$V)], alpha, 0.8* R0[2] * alpha, delta, N, gamma[1], tage[3], I_min = 10000)
   
-  hypothese4 = durchlauf(500, h, hypothese3$S[length(hypothese3$S)], 
+  hypothese4 = durchlauf(500/h, h, hypothese3$S[length(hypothese3$S)], 
                     hypothese3$I[length(hypothese3$I)], hypothese3$R[length(hypothese3$R)], 
                     hypothese3$V[length(hypothese3$V)], alpha, 0.8*R0[3] * alpha, delta, N, gamma[2], tage[3]+length(hypothese3$x))
 }else{
   hypothese3 = durchlauf(tage[3]/h-length(hypotheseI1), h, hypothese2$S[length(hypothese2$S)], 
                     hypothese2$I[length(hypothese2$I)], hypothese2$R[length(hypothese2$R)], 
                     hypothese2$V[length(hypothese2$V)], alpha, R0[3] * alpha, delta, N, gamma[2],length(hypotheseI1)/h)
-  hypothese4 = durchlauf(500, h,hypothese3$S[length(hypothese3$S)], 
+  hypothese4 = durchlauf(500/h, h,hypothese3$S[length(hypothese3$S)], 
                     hypothese3$I[length(hypothese3$I)], hypothese3$R[length(hypothese3$R)], 
                     hypothese3$V[length(hypothese3$V)], alpha, 0.8*R0[3] * alpha, delta, N, gamma[2],tage[3])
 }
 hypothesex = append(hypothese1$x, append(hypothese2$x, append(hypothese3$x,hypothese4$x) ) )
 hypotheseI = append(hypothese1$I, append(hypothese2$I, append(hypothese3$I,hypothese4$I) ) )
-hypotheseS = append(hypothese1$S, append(hypothese2$S, append(hypothese3$S,hypothese4$S) ) )
 
 
 ```
 ok
 ```{r, echo=FALSE}
-plot(schutzx, schutzI, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
+plot(verlauf1x, verlauf1I, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
+lines(verlauf2x,verlauf2I,"l", col = "green")
+lines(verlauf05x,verlauf05I,"l", col = "black")
+lines(verlauf001x,verlauf001I,"l", col = "gray")
 lines(hypothesex,hypotheseI,"l", col = " red")
 
-legend(350,3e5,legend=c("realer Verlauf","alternativer Verlauf"), col = c("dark blue","red"), lty=1:1)
+legend(350,3e5,legend=c("realer Verlauf für $h = 1$","realer Verlauf für $h = 2$","realer Verlauf für $h = 0,5$","realer Verlauf für $h = 0,01$","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
 ```
 
 # Fazit
