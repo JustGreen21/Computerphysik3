@@ -34,6 +34,7 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \begin{equation}
       V'(t) = \Gamma(t) - \delta V(t)
 \end{equation}
+Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen. Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen ANSTECKBARZEIT (?), $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
 
 ```{Rcpp}
 #include<Rcpp.h>
