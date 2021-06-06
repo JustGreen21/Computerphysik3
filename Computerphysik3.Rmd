@@ -34,7 +34,7 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \begin{equation}
       V'(t) = \Gamma(t) - \delta V(t)
 \end{equation}
-Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell Kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen, da ab diesem Punkt der vollständige Schutz eintritt. Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen Infektiositätszeit , $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
+Hierbei entspricht S der Zahl der noch nicht Infizierten, I der aktuell Kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen, da ab diesem Punkt der vollständige Schutz eintritt. Des Weiteren ist N die Gesamtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen Infektiositätszeit , $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate, mit der Geimpfte erkranken.
 
 # Runge-Kutta 2 Verfahren
 
@@ -46,10 +46,10 @@ Um die differenziellen Gleichungssysteme auszuwerten, verwenden wir das Runge-Ku
 
 Wobei sich unser f aus den vier Anteilen von S, I, R und V zusammensetzt. Wir werden die Auswirkungen der Schrittweite am Ende der Auswertung genauer betrachten.
 
-Vorerst wählen wir die Schrittweit h = 1, da dies direkt den Tagen entspricht.
-Dabei bietet uns das Rung-Kutter Verfahren nummerische Stabilität und weist mit einem Verfahrensfehler von $\mathcal{O}(h^2)$ einen kleineren Fehler als das Eulerverfahren auf.
+Vorerst wählen wir die Schrittweite h = 1, da dies direkt den Tagen entspricht.
+Dabei bietet uns das Runge-Kutter Verfahren numerische Stabilität und weist mit einem Verfahrensfehler von $\mathcal{O}(h^2)$ einen kleineren Fehler als das Eulerverfahren auf.
 
-# Implementation des DGS nach dem Runge-Kutta 2 verfahren.
+# Implementation des DGS nach dem Runge-Kutta 2 Verfahren
 
 ```{Rcpp}
 #include<Rcpp.h>
@@ -59,7 +59,7 @@ Dabei bietet uns das Rung-Kutter Verfahren nummerische Stabilität und weist mit
 
 using namespace Rcpp;
 
-// Wir verwenden Strukturen um Funktionsargumente uebersichtlicher zu halten
+// Wir verwenden Strukturen, um Funktionsargumente uebersichtlicher zu halten
 typedef struct
 {
     double S, I, R, V;
@@ -158,11 +158,13 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
 ```
 
 # Auswertung
-## Pandemieverlauf Ohne Gegenmaßnahmen
+## Pandemieverlauf ohne Gegenmaßnahmen
 
-Für den Ausbruch einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
-$N = 8.3*10^7$, $S(0) = N - 5000$, $I(0) = 5000$, und $R(0) = V(0) = 5000$.\\
-Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS_CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$, so ergibt sich Abb. \ref{fig:grundEntwicklung}.
+Für den Ausbruch einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt:
+
+$N = 8.3*10^7$, $S(0) = N - 5000$, $I(0) = 5000$, und $R(0) = V(0) = 5000$.
+
+Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS-CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$, so ergibt sich Abb. \ref{fig:grundEntwicklung}.
 ```{r, echo=FALSE}
 #Anfangsbedingungen
 N = 8.3e7
@@ -190,7 +192,7 @@ lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
-Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für einen echten Krankheitsverlauf würde ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
+Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokussiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für einen echten Krankheitsverlauf würde ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belasten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
 
 ```{r, echo=FALSE, fig.cap="\\label{fig:EntwicklungVarR} $R_0$ abhängige Infektionsverläufe"}
 
@@ -235,30 +237,30 @@ for (R1 in range) {
 }
 ```
 
-Nun wollen wir noch prüfen, ob sich die Verläufe nach der Herdenimunität verhalten. 
+Nun wollen wir noch prüfen, ob sich die Verläufe nach der Herdenimmunität verhalten. 
 Diese ist gegeben durch: 
 \begin{equation}
   \frac{S}{N} = \frac{1}{R_0}
 \end{equation}
-Dazu tragen wir am Ende der Pandemie (d.h.$I(t) < 1$) das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gesammtbevölkerung $N$ in Abhänigkeit von $R_0$ auf. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Kurvenverlauf. 
+Dazu tragen wir am Ende der Pandemie (d.h.$I(t) < 1$) das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gesamtbevölkerung $N$ in Abhängigkeit von $R_0$ auf. Zum Vergleich betrachten wir auch den nach der Herdenimmunität erwarteten Kurvenverlauf. 
 
-```{r, echo=FALSE, fig.cap="\\label{fig:Herde} $R_0$ abhänginge Herdenimmunität"}
+```{r, echo=FALSE, fig.cap="\\label{fig:Herde} $R_0$ abhängige Herdenimmunität"}
 
 plot(1/range, nicht_infizierte/N,"p", xlab = "1/R0", ylab = "S/N", col="blue")
 lines(1/range,1/range,col="gray")
-legend(0.05,1,legend=c("Simulation", "Erwartung nach Herdenimunität"), col=c("blue","gray"), lty=1:1)
+legend(0.05,1,legend=c("Simulation", "Erwartung nach Herdenimmunität"), col=c("blue","gray"), lty=1:1)
 
 ```
 
-In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf, deutlich von der Herdenimunität abweicht.
-Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt wurden und damit keinen neuen Wirte mehr vorhanden sind.
-Diese kleine Menge an "gesunden" Menschen nach der Pandiemie erklärt die größe Abweichung zur Herdenimunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkrankt waren.
-Es ist jedoch zu erwähnen, dass die Simualtion ihre Schwächen hat, da durch keine Gegenmaßnahmen das Infektionswesen wärend der ganzen Zeit für größe $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimunität nähern.    
+In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf deutlich von der Herdenimunität abweicht.
+Dies sollte an der sehr schnellen Verbreitung der Krankheit für große $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR} ist zu erkennen, dass nach wenigen Wochen die Krankheit wieder abklingt. Dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt wurden und damit keine neuen Wirte mehr vorhanden sind.
+Diese kleine Menge an "gesunden" Menschen nach der Pandemie erklärt die große Abweichung zur Herdenimmunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkrankt sind.
+Es ist jedoch zu erwähnen, dass die Simulation ihre Schwächen hat, da durch keine Gegenmaßnahmen das Infektionswesen während der ganzen Zeit für große $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimmunität nähern.    
 
 ## Mit Gegenmaßnahmen
 
 Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. 
-Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
+Des Weiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
 
 \begin{table}[h!]
     \centering
@@ -278,8 +280,8 @@ Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
 
 verwendet. $\frac{1}{\delta}$ wird auf 150 Tage gesetzt.
 
-Um den Verlauf der Pandemie möglich realitätsnah zu Simulieren, wurden die $R_0$ werte so angepasst, dass die aktiven Fälle der Simulation zum jeweiliegen Zeitpunkt (der Daten) mit den Daten des RKI in näherung übereinstimmt. Abweichung von $\Delta I = 300$ wurden als vernachlässigbar klein angenommen, da $I \gg \Delta I$ ist im betrachtetem Bereich.
-Um den Pandemieverlauf besser betrachten zu können haben wir im folgenden Diagramm nicht nur die 365 Tage vom Jahr 2021 aufgetragen, sondern großteile der Jahres 2022 mit einbezogen.
+Um den Verlauf der Pandemie möglichst realitätsnah zu simulieren, wurden die $R_0$ Werte so angepasst, dass die aktiven Fälle der Simulation zum jeweiligen Zeitpunkt mit den Daten des RKI in Näherung übereinstimmen. Abweichung von $\Delta I = 300$ wurden als vernachlässigbar klein angenommen, da $I \gg \Delta I$ im betrachtetem Bereich ist.
+Um den Pandemieverlauf besser betrachten zu können, haben wir im folgenden Diagramm nicht nur die 365 Tage vom Jahr 2021 aufgetragen, sondern Großteile des Jahres 2022 miteinbezogen.
 
 ```{r, echo=FALSE}
 # Anfangsbedingungen 
@@ -394,37 +396,38 @@ hypotheseI = append(hypothese1$I, append(hypothese2$I, append(hypothese3$I,hypot
 
 ```
 
-```{r, echo=FALSE, fig.cap="\\label{fig:wahrerVerlauf} $R_0$ abhänginge Herdenimmunität"}
+```{r, echo=FALSE, fig.cap="\\label{fig:wahrerVerlauf} $R_0$ abhängige Herdenimmunität"}
 plot(verlauf1x, verlauf1I, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
 lines(verlauf2x,verlauf2I,"l", col = "green")
 lines(verlauf05x,verlauf05I,"l", col = "black")
 lines(verlauf001x,verlauf001I,"l", col = "gray")
 lines(hypothesex,hypotheseI,"l", col = " red")
 
-legend(350,3e5,legend=c("realer Verlauf für h = 1","realer Verlauf für h = 2","realer Verlauf für h = 0,5","realer Verlauf für h = 0,01","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
+legend(270,3e5,legend=c("realer Verlauf für h = 1","realer Verlauf für h = 2","realer Verlauf für h = 0,5","realer Verlauf für h = 0,01","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
 ```
+
 Wie recht einfach an Abb. \ref{wahrerVerlauf} zu sehen ist, wirkt sich die Schrittweite $h$ nicht sehr stark auf die Projektion des Verlaufes für das restliche Jahr aus.
-Falls das $h$ jedoch noch größer gewählt werden würde, wäre der Verlauf nicht mehr ümbedingt representabel, da die genutzten Daten einen gewissen Abstand (weniger als 40 Tage) haben und die benutzte Datenmenge an sich schon recht knapp ist.
-Dies geringe Abhänigkeit von $h$ zeigt jedoch, dass das genutzt Runge-Kutter Verfahren ein stabieles Verfahren ist, welches gut Werte produziert.
+Falls das $h$ jedoch noch größer gewählt werden würde, wäre der Verlauf nicht mehr unbedingt repräsentativ, da die genutzten Daten einen gewissen Abstand (weniger als 40 Tage) haben und die benutzte Datenmenge an sich schon recht knapp ist.
+Diese geringe Abhängigkeit von $h$ zeigt jedoch, dass das genutzte Runge-Kutter Verfahren ein stabiles Verfahren ist, welches gute Werte produziert.
 
 Nun können wir noch einen Vergleich unserer Simulation mit den RKI Daten zu einem hypothetischen Verlauf tätigen.
 Dabei wurde beim hypothetischen Verlauf der $R_0$ Wert Mitte Januar auf 0,5 gesenkt und so lange gehalten, bis $I<1000$ ist und danach auf $R_0 = 1,2$ gehalten.
-Als zusatzbedingung sinkt durch saisonale Effekte der $R_0$ auf $80 \%$.
+Als Zusatzbedingung sinkt durch saisonale Effekte der $R_0$ auf $80 \%$.
 In Abb. \ref{wahrerVerlauf} ist zu erkennen, dass der hypothetische Verlauf einen stetigen Abfall der Infizierten darstellt. Dies ist an dem Verlauf des $R_0$ Wertes zu erwarten gewessen.
-Es ist auch auffällig das der hypothetische Verlauf für die ersten ca. 70 Tage eine in Näherung gleichen Verlauf hat wie der reale Verlauf.
-Jedoch hat der reale Verlauf ab ca. Tag 70 bis Tag 110 einen großen anstieg der Infizieten und fällt dann wieder ab. Erst stärker und ab ca. Tag 150 wieder schwächer.
-Am Ende des Jahres bei Tag 362 liegen beide Verläufe wieder sehr nah bei einander. An dies auch der Punkt ist an dem die Pandemie nach der Simulation als Angeklungen bezeichnet werden kann, da der weite Verlauf keine verschlimmerung aufweist (dies ist jedoch sehr hypothetisch da eine solche Vorraussage auf eingeschränkten annahmen beruht und versucht recht weite Zeitraume zu deuten).
-Der in realen Verlauf auftauchende Peak lässt sich durch frühzeitigen Lockerungen Anfang März erklären, was  zu einem rapieden Anstieg von infizierten führte (Lockerungsmaßnahmen \cite{lockerungenmaerz}).
+Es ist auch auffällig, dass der hypothetische Verlauf für die ersten ca. 70 Tage eine in Näherung gleichen Verlauf hat wie der reale Verlauf.
+Jedoch hat der reale Verlauf ab ca. Tag 70 bis Tag 110 einen großen Anstieg der Infizierten und fällt dann wieder ab, erst stärker und ab ca. Tag 150 wieder schwächer.
+Am Ende des Jahres bei Tag 362 liegen beide Verläufe wieder sehr nah beieinander. Dies ist auch der Punkt, an dem die Pandemie nach der Simulation als abgeklungen bezeichnet werden kann, da der weitere Verlauf keine Verschlimmerung aufweist.
+Der im realen Verlauf auftauchende Peak lässt sich durch frühzeitige Lockerungen Anfang März erklären, was zu einem rapiden Anstieg von Infizierten führte (Lockerungsmaßnahmen \cite{lockerungenmaerz}).
 
 
 # Fazit
 
-Mit hilfe des Runge-Kutta 2 Verfahren konnten wir den Pandemieverlauf, mit dem DGS in guter Näherung simulieren.
-Dabei stellten wir fest, dass große $R_0$ wie auch zu erwarten  einen schnellen Anstieg der Infizierten zur folge hat. 
-Es war weitergehend zu erkennen, dass sich durch dies schnelle Verbreitung eine diskrepanz zwichen der Simulation und der Herdenimunität ergibt.
-Bei der Konstrucktion des realen Verlauf konnte man, durch die konstantheit des Verlaufs unter Variation der Schrittweite eine stärke der Runge-Kutta Verfahrens aufzeigen.
-Der zusätzliche hypothetische Verlauf wäre eine alternative zum realenverlauf gewessen, hätte aber weiter soziale Einschränkungen zu folge gehabt.
-Wenn man keinen verschlimmerungen zu erwarten hat kann man mit einem ungefährem Ende der Pandemie spätestens Ende des Jahres 2021 rechnen.
+Mit Hilfe des Runge-Kutta 2 Verfahrens konnten wir den Pandemieverlauf mit dem DGS in guter Näherung simulieren.
+Dabei stellten wir fest, dass große $R_0$ wie auch zu erwarten einen schnellen Anstieg der Infizierten zur Folge haben. 
+Es war weitergehend zu erkennen, dass sich durch diese schnelle Verbreitung eine Diskrepanz zwischen der Simulation und der Herdenimmunität ergibt.
+Bei der Konstruktion des realen Verlaufs konnte man durch die Konstantheit des Verlaufs unter Variation der Schrittweite eine Stärke des Runge-Kutta Verfahrens aufzeigen.
+Der zusätzliche hypothetische Verlauf wäre eine Alternative zum realen Verlauf gewesen, hätte aber weitere soziale Einschränkungen zur Folge gehabt.
+Wenn man keine Verschlimmerungen zu erwarten hat, kann man mit einem ungefähren Ende der Pandemie spätestens Ende des Jahres 2021 rechnen.
 
 \begin{thebibliography}{99}
 \bibitem{januar} 
