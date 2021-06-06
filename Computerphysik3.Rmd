@@ -34,9 +34,9 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \begin{equation}
       V'(t) = \Gamma(t) - \delta V(t)
 \end{equation}
-Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen. Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen ANSTECKBARZEIT (?), $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
+Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen, da ab diesem Punkt der vollständige Schutz eintritt . Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen Infektiositätszeit , $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
 
-# Lunge Jutta Verfahren
+# Runge-Kutta 2 Verfahren
 
 Um die differenziellen Gleichungssysteme auszuwerten, verwenden wir das Runge-Kutta Verfahren nach
 
@@ -44,16 +44,15 @@ Um die differenziellen Gleichungssysteme auszuwerten, verwenden wir das Runge-Ku
   x_{i+1} = x_i + \frac{h}{2}[f(t_i, x_i) + f(t_i+h, x_i+h f(t_i,x_i))]
 \end{equation}
 
-Wobei sich in unserem f aus den vier Anteilen von S, I, R und V zusammensetzt. Wir werden die Auswirkungen der Schrittweite am Ende der Auswertung genauer betrachten.
+Wobei sich unser f aus den vier Anteilen von S, I, R und V zusammensetzt. Wir werden die Auswirkungen der Schrittweite am Ende der Auswertung genauer betrachten.
+Vorerst wählen wir die Schrittweit h = 1, da dies direkt den Tagen entspricht.
+Dabei bietet uns das Rung-Kutter Verfahren nummerische Stabilität und weist mit einem Verfahrensfehler von $\mathcal{O}(h^2)$ einen kleineren Fehler als das Eulerverfahren aus.
 
-# Implementation
-
-
+# Implementation des DGS nach dem Runge-Kutta 2 verfahren.
 
 ```{Rcpp}
 #include<Rcpp.h>
 #include<stdlib.h>
-#include<stdio.h>
 #include<vector>
 #include<algorithm>
 
@@ -70,35 +69,42 @@ typedef struct
     double alpha, beta, delta, N, gamma;
 } Parameter;
 
-// Template zum zerschneiden der verwendeten Vektoren
+// Template zum Zerschneiden der verwendeten Vektoren
 template<typename T>
 std::vector<T> slice(std::vector<T> const &v, int m, int n)
 {
-    auto first = v.cbegin() + m;
-    auto last = v.cbegin() + n + 1;
+    auto erste = v.cbegin() + m;
+    auto letzte = v.cbegin() + n + 1;
  
-    std::vector<T> vec(first, last);
-    return vec;
+    std::vector<T> vektor(erste, letzte);
+    return vektor;
 }
 
-// Berechnung der Ableitungen nach den DGL
+// Berechnungsschritt der Ableitungen nach dem DGS
 void f(Status alterStatus, Parameter parameter, Status& neuerStatus){
   double Gamma = std::min(parameter.gamma,alterStatus.I);
-    neuerStatus.V = Gamma - parameter.delta * alterStatus.V;
-    neuerStatus.R = parameter.alpha * alterStatus.I;
+    neuerStatus.S = -parameter.beta * alterStatus.S * alterStatus.I/parameter.N 
+      - Gamma + parameter.delta * alterStatus.V;
+    
     neuerStatus.I = parameter.beta * alterStatus.S * alterStatus.I/parameter.N
       - parameter.alpha * alterStatus.I;
-    neuerStatus.S = -parameter.beta * alterStatus.S * alterStatus.I/parameter.N
-      - Gamma + parameter.delta * alterStatus.V;
+    
+    neuerStatus.R = parameter.alpha * alterStatus.I;
+  
+    neuerStatus.V = Gamma - parameter.delta * alterStatus.V;
 }
 
 // Ein Intergrationsschritt nach Runge-Kutta
 void rkSchritt(Status& status, Parameter parameter, double h){
     Status fStatus;                 // Standart Ableitung
     f(status, parameter, fStatus);
+    
     Status f2Status;                // Mischterm Ableitung
-    Status gemischt = {.S = status.S + h*fStatus.S, .I = status.I
-      + h*fStatus.I, .R = status.R + h*fStatus.R, .V = status.V + h*fStatus.V};
+    Status gemischt = {.S = status.S + h*fStatus.S, 
+                       .I = status.I + h*fStatus.I,
+                       .R = status.R + h*fStatus.R,
+                       .V = status.V + h*fStatus.V};
+    
     f(gemischt, parameter, f2Status);
     status.V = status.V + h/2*(fStatus.V + f2Status.V);
     status.R = status.R + h/2*(fStatus.R + f2Status.R);
@@ -114,45 +120,50 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
                             const double N, const double gamma,
                             const double x0,const int I_min = 1){
   // Arrays der Werte zur späteren Ausgabe
-    std::vector<double> xValue(maxSchritte);
-    std::vector<double> SValue(maxSchritte);
-    std::vector<double> IValue(maxSchritte);
-    std::vector<double> RValue(maxSchritte);
-    std::vector<double> VValue(maxSchritte);
+    std::vector<double> xWerte(maxSchritte);
+    std::vector<double> SWerte(maxSchritte);
+    std::vector<double> IWerte(maxSchritte);
+    std::vector<double> RWerte(maxSchritte);
+    std::vector<double> VWerte(maxSchritte);
   // Quelltext
   Status status = {.S = S, .I = I, .R = R, .V = V};
   Parameter parameter = {.alpha = alpha, .beta = beta, .delta = delta, .N = N, .gamma = gamma};
   // Schleife bis zur Abbruchsbedingung
     for (int i = 0; i < maxSchritte; i++){
-      xValue[i] = x0 + i*h;
-      SValue[i] = status.S;
-      IValue[i] = status.I;
-      RValue[i] = status.R;
-      VValue[i] = status.V;
+      xWerte[i] = x0 + i*h;
+      SWerte[i] = status.S;
+      IWerte[i] = status.I;
+      RWerte[i] = status.R;
+      VWerte[i] = status.V;
       rkSchritt(status, parameter, h);
-  // Vorzeitige Abbruchbedingung    
+  // Vorzeitige Abbruchbedingung für Sonderbedingung von I   
       if(status.I < I_min && i>10){
           // Rückgabe für eine grafische Wiedergabe
-          return List::create(Named("x") = slice(xValue,0,i), 
-                              Named("S") = slice(SValue,0,i), 
-                              Named("I") = slice(IValue,0,i),
-                              Named("R") = slice(RValue,0,i), 
-                              Named("V") = slice(VValue,0,i)
+          return List::create(Named("x") = slice(xWerte,0,i), 
+                              Named("S") = slice(SWerte,0,i), 
+                              Named("I") = slice(IWerte,0,i),
+                              Named("R") = slice(RWerte,0,i), 
+                              Named("V") = slice(VWerte,0,i)
           );
       }
     }
   // Rückgabe für eine grafische Wiedergabe
-    return List::create(Named("x") = xValue, Named("S") = SValue, 
-                        Named("I") = IValue, Named("R") = RValue, 
-                        Named("V") = VValue
+    return List::create(Named("x") = xWerte, Named("S") = SWerte, 
+                        Named("I") = IWerte, Named("R") = RWerte, 
+                        Named("V") = VWerte
     );
 }
 
 ```
 
 # Auswertung
-## Ohne Gegenmaßnahmen
+## Pandemieverlauf Ohne Gegenmaßnahmen
+
+Für den ausgebrochen einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
+$N = 8.3*10^7$, $S(0) = N - 5000$, $I(0) = 5000$, und $R(0) = V(0) = 5000$.\\
+Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS_CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$ so ergibt sich Abb. \ref{fig:grundEntwicklung}.
 ```{r, echo=FALSE}
+#Anfangsbedingungen
 N = 8.3e7
 S = N - 5000
 I = 5000
@@ -163,24 +174,29 @@ alpha = 1/7
 beta = R0 * alpha
 delta = 0
 gamma = 0
+
+#Schrittwahl
 h = 1
 schritte = 1000
+
 schutzlos1 = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma, 0)
 ```
 
-```{r, echo=FALSE, fig.cap="\\label{fig:std} Entwicklungskurven"}
+```{r, echo=FALSE, fig.cap="\\label{fig:grundEntwicklung} Entwicklungskurven für $R_0 = 2.9$"}
 plot(schutzlos1$x, schutzlos1$S, "l", xlab = "Tage", ylim=c(0, schutzlos1$S[1]),ylab = "Menschen", col = "dark blue")
 lines(schutzlos1$x, schutzlos1$I, "l", col = "dark green")
 lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
-Abb. \ref{fig:std} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:LSD} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für eine echten Krankheitsverlauf würde Ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
+Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR0} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für eine echten Krankheitsverlauf würde Ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
 
-```{r, echo=FALSE, fig.cap="\\label{fig:LSD} $R_0$ abhängige Infektionsverläufe"}
+```{r, echo=FALSE, fig.cap="\\label{fig:EntwicklungVarR0} $R_0$ abhängige Infektionsverläufe"}
 
+#Farbskala
 pal <- colorRamp(c("red", "blue"))
 
+# Anfangswerte und Schrittweite
 N = 8.3e7
 S = N - 5000
 I = 5000
@@ -191,47 +207,71 @@ alpha = 1/7
 beta = R0 * alpha
 delta = 0
 gamma = 0
-h = 0.01
+h = 0.01 #kleineres h fuer bessere Genauigkeit 
 schritte = 50000
 
-schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
+
+schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,1)
 plot(schutzlos$x, schutzlos$I, "l", xlab = "Tage", ylim=c(0, 6.5e7), xlim=c(0,140), ylab = "erkrankte Menschen", col = rainbow(20)[R0])
 
+#Plot fur alle anderen R_0 Werte
 range <- 1:20
-nicht_infizierte <- 1:20 
-
 for (R1 in range) {
   beta = R1 * alpha
-  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,0)
+  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,1)
   lines(schutzlos$x, schutzlos$I, "l", col = rainbow(20)[R1])
-  nicht_infizierte[R1] = schutzlos$S[length(schutzlos$S)]
 }
 
-legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainbow(20)[1], rainbow(20)[7], rainbow(20)[14], rainbow(20)[20]), lty=1:1)
-```
+legend(100,5e7,legend=c("R0 = 1", "R0 = 7", "R0 = 14", "R0 = 20"), col = c(rainbow(20)[1], rainbow(20)[6], rainbow(20)[11], rainbow(20)[16]), lty=1:1)
 
-```{r, echo=FALSE, fig.cap="\\label{fig:Herde} R_0 abhänginge Herdenimmunität"}
+#Bestimmung der nicht Infitzieten am Ende des Pademieverlaufs 
+
+nicht_infizierte = range
+for (R1 in range) {
+  beta = R1 * alpha
+  schutzlos = durchlauf(schritte, h, S, I, R, V, alpha, beta, delta, N, gamma,1)
+  nicht_infizierte[R1] = schutzlos$S[length(schutzlos$S)]
+}
+```
+Nun wollen wir noch Prüfen ob sich die Verfläufe nach der Herdenimunität verhalten. 
+Diese ist gegeben durch: 
+\begin{equation}
+  \frac{S}{N} = \frac{1}{R_0}
+\end{equation}
+Dazu tragen wir die am ende der Pandemie (d.h.$I(t) < 0$), das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gegsamtbevölkerung $N$ auf in abhänigkeit von $R_0$. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Verlauf. 
+
+```{r, echo=FALSE, fig.cap="\\label{fig:Herde} $R_0$ abhänginge Herdenimmunität"}
 
 plot(1/range, nicht_infizierte/N,"p", xlab = "1/R0", ylab = "S/N", col="blue")
 lines(1/range,1/range,col="gray")
-legend(0.05,1,legend=c("Simulation", "Erwartung"), col=c("blue","gray"), lty=1:1)
+legend(0.05,1,legend=c("Simulation", "Erwartung nach Herdenimunität"), col=c("blue","gray"), lty=1:1)
 
 ```
 
-Jo Abb. \ref{fig:Herde} nimmt uns ziemlich Hops!
+In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf, der zu erwarten ist, deutlich vom der Herdenimunität abweicht.
+Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR0} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt würden und damit keinen neuen Wirte mehr vorhanden sind.
+Diese keine Menge an "gesunden" Menschen nach der Pandiemie erklärt die größe abweichung zur Herdenimunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkannt waren.
+Es ist jedoch zu erwähnen, das die Simualtion ihre schwächen hat, da durch keine Gegenmaßnahmen das Infektionswessen wärend des ganzen für größe $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimunität nähern.    
+
 
 ## Mit Gegenmaßnahmen
 
-Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
-
-WIE MACHT MAN TABELLEN?
-            $\gamma$          Tag        aktive Fälle      
-Januar:     40665             3           349500
-Februar:    61132             37          193200
-März:       60776             71          127100
-April:      57895             110         279400
-Mai:        406455            142         167100
-Juni:       337478            152         95900
+Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. 
+Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c|c|c|c}
+    Monat & Tag im Jahr & Impfungsrate $\gamma$ & aktive Fälle $I$
+    Januar:  &     3      &  40665      &    349500 \\
+    Februar: &     37     &  61132      &    193200 \\
+    März:    &     71     &  60776      &    127100 \\
+    April:   &    110     &  57895      &    279400 \\
+    Mai:     &    142     &  406455     &    167100 \\
+    Juni:    &    152     &  337478     &    95900  
+    \end{tabular}
+    \caption{RKI Daten zur Covid-19 Entwicklung von 3.1.21- 1.6.21 , \cite{janunar} bis \cite{juni}}
+    \label{tab:data}
+\end{table}
 
 verwendet. $\frac{1}{\delta}$ wird auf 150 Tage gesetzt.
 
@@ -343,5 +383,9 @@ Machen wir sowas überhaupt?
 
 \bibitem{mai} 
 \textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Mai_2021/2021-05-22-de.pdf?__blob=publicationFile}, Stand: 24.05.2021.
+
+\bibitem{juni} 
+\textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Jun_2021/2021-06-01-de.pdf?__blob=publicationFile}, Stand: 06.06.2021.
+ 
 
 \end{thebibliography}
