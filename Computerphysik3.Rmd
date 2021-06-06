@@ -17,8 +17,8 @@ header-includes:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Im Folgenden wollen wir ein Simulierte Pandemieausbreitung von SARS-CoV-2 für verschiedene Parameter im SIR Modell betrachten.
-Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialgleichungssystem.
+Im Folgenden wollen wir eine simulierte Pandemieausbreitung von SARS-CoV-2 für verschiedene Parameter im SIR Modell betrachten.
+Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialgleichungssystem:
 \begin{equation}
       S'(t) = -\frac{\beta}{N}S(t)I(t) -\Gamma(t)+ \delta V(t)
 \end{equation}
@@ -34,19 +34,20 @@ Das SIR  Modell beschreibt den zeitlichen Verlauf mit folgendem Differentialglei
 \begin{equation}
       V'(t) = \Gamma(t) - \delta V(t)
 \end{equation}
-Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen, da ab diesem Punkt der vollständige Schutz eintritt . Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen Infektiositätszeit , $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
+Hierbei entspricht S der Zahl der noch nicht Infektierten, I der aktuell Kranken, R der Genesenen und V der Geimpften. Wir werden im Verlauf der Simulationen die Geimpftenzahl mit der Anzahl der Personen mit Zweitimpfung gleichsetzen, da ab diesem Punkt der vollständige Schutz eintritt. Desweiteren ist N die Gesammtbevölkerung, $R_0$ entspricht der Basisreproduktionszahl, $\alpha$ der inversen Infektiositätszeit , $\beta = R_0 * \alpha$, $\Gamma$ die Impfungsrate und $\delta$ die Rate mit der Geimpfte erkranken.
 
 # Runge-Kutta 2 Verfahren
 
 Um die differenziellen Gleichungssysteme auszuwerten, verwenden wir das Runge-Kutta Verfahren nach
 
 \begin{equation}
-  x_{i+1} = x_i + \frac{h}{2}[f(t_i, x_i) + f(t_i+h, x_i+h f(t_i,x_i))]
+  x_{i+1} = x_i + \frac{h}{2}[f(t_i, x_i) + f(t_i+h, x_i+h f(t_i,x_i))].
 \end{equation}
 
 Wobei sich unser f aus den vier Anteilen von S, I, R und V zusammensetzt. Wir werden die Auswirkungen der Schrittweite am Ende der Auswertung genauer betrachten.
+
 Vorerst wählen wir die Schrittweit h = 1, da dies direkt den Tagen entspricht.
-Dabei bietet uns das Rung-Kutter Verfahren nummerische Stabilität und weist mit einem Verfahrensfehler von $\mathcal{O}(h^2)$ einen kleineren Fehler als das Eulerverfahren aus.
+Dabei bietet uns das Rung-Kutter Verfahren nummerische Stabilität und weist mit einem Verfahrensfehler von $\mathcal{O}(h^2)$ einen kleineren Fehler als das Eulerverfahren auf.
 
 # Implementation des DGS nach dem Runge-Kutta 2 verfahren.
 
@@ -159,9 +160,9 @@ Rcpp::List durchlauf(const int maxSchritte, const double h,
 # Auswertung
 ## Pandemieverlauf Ohne Gegenmaßnahmen
 
-Für den ausgebrochen einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
+Für den Ausgebruch einer Krankheit in Deutschland sind die Anfangswerte gegeben wie folgt.\\
 $N = 8.3*10^7$, $S(0) = N - 5000$, $I(0) = 5000$, und $R(0) = V(0) = 5000$.\\
-Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS_CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$ so ergibt sich Abb. \ref{fig:grundEntwicklung}.
+Betrachten wir nun den Verlauf ohne Gegenmaßnahmen, also $\Gamma = \delta = 0$ und den SARS_CoV-2 spezifischen Daten $R_0 \approx 2.9$ und $\alpha = \frac{1}{7 \, \mathrm{Tage}}$, so ergibt sich Abb. \ref{fig:grundEntwicklung}.
 ```{r, echo=FALSE}
 #Anfangsbedingungen
 N = 8.3e7
@@ -189,7 +190,7 @@ lines(schutzlos1$x, schutzlos1$R, "l", col = "red")
 legend(150,6e7,legend=c("S", "I","R"), col = c("dark blue", "green","red"), lty=1:1)
 ```
 
-Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR0} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für eine echten Krankheitsverlauf würde Ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
+Abb. \ref{fig:grundEntwicklung} bestätigt bereits, dass unsere Funktion die erwarteten Infektionskurven ausgibt. Betrachten wir nun die Kurven für $R_0 \in [1,20]$, so können wir in Abb. \ref{fig:EntwicklungVarR0} sehen, wie sich die Krankheit für große Basisreproduktionszahlen auf wenige Tage fokusiert und die Infektionszahlen in die Höhe steigen. Im Vergleich dazu sind die Kurven für kleine Basisreproduktionszahlen deutlich flacher, strecken sich jedoch auch über ein Vielfaches der Zeit. Für einen echten Krankheitsverlauf würde ersteres die Kapazitäten von Krankenhäusern und anderen Institutionen extrem belassten, während zweiteres lang andauernde Beschränkungen für soziale Interaktionen mit sich bringen könnte.
 
 ```{r, echo=FALSE, fig.cap="\\label{fig:EntwicklungVarR0} $R_0$ abhängige Infektionsverläufe"}
 
@@ -233,12 +234,12 @@ for (R1 in range) {
   nicht_infizierte[R1] = schutzlos$S[length(schutzlos$S)]
 }
 ```
-Nun wollen wir noch Prüfen ob sich die Verfläufe nach der Herdenimunität verhalten. 
+Nun wollen wir noch prüfen, ob sich die Verläufe nach der Herdenimunität verhalten. 
 Diese ist gegeben durch: 
 \begin{equation}
   \frac{S}{N} = \frac{1}{R_0}
 \end{equation}
-Dazu tragen wir die am ende der Pandemie (d.h.$I(t) < 0$), das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gegsamtbevölkerung $N$ auf in abhänigkeit von $R_0$. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Verlauf. 
+Dazu tragen wir am Ende der Pandemie (d.h.$I(t) < 0$) das Verhältnis der noch nicht Infizierten $S(t)$ gegenüber der Gesammtbevölkerung $N$ in Abhänigkeit von $R_0$ auf. Zum Vergleich betrachten wir auch den nach der Herdinimunität erwarteten Kurvenverlauf. 
 
 ```{r, echo=FALSE, fig.cap="\\label{fig:Herde} $R_0$ abhänginge Herdenimmunität"}
 
@@ -248,20 +249,21 @@ legend(0.05,1,legend=c("Simulation", "Erwartung nach Herdenimunität"), col=c("b
 
 ```
 
-In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf, der zu erwarten ist, deutlich vom der Herdenimunität abweicht.
-Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR0} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt würden und damit keinen neuen Wirte mehr vorhanden sind.
-Diese keine Menge an "gesunden" Menschen nach der Pandiemie erklärt die größe abweichung zur Herdenimunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkannt waren.
-Es ist jedoch zu erwähnen, das die Simualtion ihre schwächen hat, da durch keine Gegenmaßnahmen das Infektionswessen wärend des ganzen für größe $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimunität nähern.    
-
+In  Abb. \ref{fig:Herde} ist zu erkennen, dass der von uns simulierte Verlauf, deutlich von der Herdenimunität abweicht.
+Dies sollte an der sehr schnellen Verbreitung der Kankheit für größe $R_0$ Werte liegen. Nach Abb. \ref{fig:EntwicklungVarR0} ist zu erkennen, dass nach wenigen Wochen, die Krankheit wieder abklingt, dies liegt jedoch daran, dass alle gesunden Menschen schon angesteckt wurden und damit keinen neuen Wirte mehr vorhanden sind.
+Diese kleine Menge an "gesunden" Menschen nach der Pandiemie erklärt die größe Abweichung zur Herdenimunität, bei der größere Teile der Bevölkerung nach der Pandemie nie erkrankt waren.
+Es ist jedoch zu erwähnen, dass die Simualtion ihre Schwächen hat, da durch keine Gegenmaßnahmen das Infektionswesen wärend der ganzen Zeit für größe $R_0$ Werte auch groß bleibt. Unter Einbeziehung von Gegenmaßnahmen sollte man sich der Erwartung nach Herdenimunität nähern.    
 
 ## Mit Gegenmaßnahmen
 
 Unter der Verwendung der Daten des RKI versuchen wir den COVID-19-Verlauf zu modellieren. Als Startwert wurden die Daten des 03.01.2021 \cite{januar} mit I = 349500, R = 1765666-I, V = 238809 verwendet. 
 Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
+
 \begin{table}[h!]
     \centering
     \begin{tabular}{c|c|c|c}
-    Monat & Tag im Jahr & Impfungsrate $\gamma$ & aktive Fälle $I$
+    Monat & Tag im Jahr & Impfungsrate $\gamma$ & aktive Fälle $I$ \\
+    \hline
     Januar:  &     3      &  40665      &    349500 \\
     Februar: &     37     &  61132      &    193200 \\
     März:    &     71     &  60776      &    127100 \\
@@ -269,7 +271,7 @@ Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
     Mai:     &    142     &  406455     &    167100 \\
     Juni:    &    152     &  337478     &    95900  
     \end{tabular}
-    \caption{RKI Daten zur Covid-19 Entwicklung von 3.1.21- 1.6.21 , \cite{janunar} bis \cite{juni}}
+    \caption{RKI Daten zur Covid-19 Entwicklung von 3.1.21- 1.6.21 , \cite{januar} bis \cite{juni}}
     \label{tab:data}
 \end{table}
 
