@@ -279,6 +279,7 @@ Desweiteren wurde $\gamma$ und $\mathrm{N}_0$ als Treppenfunktion mit den Werten
 verwendet. $\frac{1}{\delta}$ wird auf 150 Tage gesetzt.
 
 Um den Verlauf der Pandemie möglich realitätsnah zu Simulieren, wurden die $R_0$ werte so angepasst, dass die aktiven Fälle der Simulation zum jeweiliegen Zeitpunkt (der Daten) mit den Daten des RKI in näherung übereinstimmt. Abweichung von $\Delta I = 300$ wurden als vernachlässigbar klein angenommen, da $I \gg \Delta I$ ist im betrachtetem Bereich.
+Um den Pandemieverlauf besser betrachten zu können haben wir im folgenden Diagramm nicht nur die 365 Tage vom Jahr 2021 aufgetragen, sondern großteile der Jahres 2022 mit einbezogen.
 
 ```{r, echo=FALSE}
 # Anfangsbedingungen 
@@ -358,10 +359,11 @@ verlauf001x = verlauf001[1:(length(verlauf001)/2)]
 verlauf001I = verlauf001[(length(verlauf001)/2 + 1):length(verlauf001)]
 
 
-#Vergleich
+#Aufstellen eines hypothetischen Verlaufs
 tage <-c(3,15,121)
 R0h <-c(0.91,0.5,1.2)
 h = 0.01 
+#Verlauf Von Januar bis zum Tag wo I<1000
 hypothese1 = durchlauf((tage[2]-tage[1])/h, h, S, I, R, V, alpha, R0[1] * alpha, delta, N, gamma[1], tage[1])
 hypothese2 = durchlauf((tage[3]-tage[2])/h,h, hypothese1$S[length(hypothese1$S)], 
                     hypothese1$I[length(hypothese1$I)], hypothese1$R[length(hypothese1$R)], 
@@ -369,6 +371,7 @@ hypothese2 = durchlauf((tage[3]-tage[2])/h,h, hypothese1$S[length(hypothese1$S)]
 
 hypotheseI1 = append(hypothese1$I,hypothese2$I)
 
+# Falls im Mai der I Wert noch über I>1000 sonst "normaler" unterer Verlauf mit R0 = 1.2 und Senkung ab Mai
 if(tail(hypothese2$I,n=1) > 10000){
   hypothese3 = durchlauf(500/h, h, hypothese2$S[length(hypothese2$S)], 
                     hypothese2$I[length(hypothese2$I)], hypothese2$R[length(hypothese2$R)], 
@@ -390,20 +393,38 @@ hypotheseI = append(hypothese1$I, append(hypothese2$I, append(hypothese3$I,hypot
 
 
 ```
-ok
-```{r, echo=FALSE}
+
+```{r, echo=FALSE, fig.cap="\\label{fig:wahrerVerlauf} $R_0$ abhänginge Herdenimmunität"}
 plot(verlauf1x, verlauf1I, "l", xlab = "Tage", ylab = "Menschen", col = "dark blue")
 lines(verlauf2x,verlauf2I,"l", col = "green")
 lines(verlauf05x,verlauf05I,"l", col = "black")
 lines(verlauf001x,verlauf001I,"l", col = "gray")
 lines(hypothesex,hypotheseI,"l", col = " red")
 
-legend(350,3e5,legend=c("realer Verlauf für $h = 1$","realer Verlauf für $h = 2$","realer Verlauf für $h = 0,5$","realer Verlauf für $h = 0,01$","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
+legend(350,3e5,legend=c("realer Verlauf für h = 1","realer Verlauf für h = 2","realer Verlauf für h = 0,5","realer Verlauf für h = 0,01","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
 ```
+Wie recht einfach an Abb. \ref{wahrerVerlauf} zu sehen ist, wirkt sich die Schrittweite $h$ nicht sehr stark auf die Projektion des Verlaufes für das restliche Jahr aus.
+Falls das $h$ jedoch noch größer gewählt werden würde, wäre der Verlauf nicht mehr ümbedingt representabel, da die genutzten Daten einen gewissen Abstand (weniger als 40 Tage) haben und die benutzte Datenmenge an sich schon recht knapp ist.
+Dies geringe Abhänigkeit von $h$ zeigt jedoch, dass das genutzt Runge-Kutter Verfahren ein stabieles Verfahren ist, welches gut Werte produziert.
+
+Nun können wir noch einen Vergleich unserer Simulation mit den RKI Daten zu einem hypothetischen Verlauf tätigen.
+Dabei wurde beim hypothetischen Verlauf der $R_0$ Wert Mitte Januar auf 0,5 gesenkt und so lange gehalten, bis $I<1000$ ist und danach auf $R_0 = 1,2$ gehalten.
+Als zusatzbedingung sinkt durch saisonale Effekte der $R_0$ auf $80 \%$.
+In Abb. \ref{wahrerVerlauf} ist zu erkennen, dass der hypothetische Verlauf einen stetigen Abfall der Infizierten darstellt. Dies ist an dem Verlauf des $R_0$ Wertes zu erwarten gewessen.
+Es ist auch auffällig das der hypothetische Verlauf für die ersten ca. 70 Tage eine in Näherung gleichen Verlauf hat wie der reale Verlauf.
+Jedoch hat der reale Verlauf ab ca. Tag 70 bis Tag 110 einen großen anstieg der Infizieten und fällt dann wieder ab. Erst stärker und ab ca. Tag 150 wieder schwächer.
+Am Ende des Jahres bei Tag 362 liegen beide Verläufe wieder sehr nah bei einander. An dies auch der Punkt ist an dem die Pandemie nach der Simulation als Angeklungen bezeichnet werden kann, da der weite Verlauf keine verschlimmerung aufweist (dies ist jedoch sehr hypothetisch da eine solche Vorraussage auf eingeschränkten annahmen beruht und versucht recht weite Zeitraume zu deuten).
+Der in realen Verlauf auftauchende Peak lässt sich durch frühzeitigen Lockerungen Anfang März erklären, was  zu einem rapieden Anstieg von infizierten führte (Lockerungsmaßnahmen \cite{lockerungenmaerz}).
+
 
 # Fazit
 
-Machen wir sowas überhaupt?
+Mit hilfe des Runge-Kutta 2 Verfahren konnten wir den Pandemieverlauf, mit dem DGS in guter Näherung simulieren.
+Dabei stellten wir fest, dass große $R_0$ wie auch zu erwarten  einen schnellen Anstieg der Infizierten zur folge hat. 
+Es war weitergehend zu erkennen, dass sich durch dies schnelle Verbreitung eine diskrepanz zwichen der Simulation und der Herdenimunität ergibt.
+Bei der Konstrucktion des realen Verlauf konnte man, durch die konstantheit des Verlaufs unter Variation der Schrittweite eine stärke der Runge-Kutta Verfahrens aufzeigen.
+Der zusätzliche hypothetische Verlauf wäre eine alternative zum realenverlauf gewessen, hätte aber weiter soziale Einschränkungen zu folge gehabt.
+Wenn man keinen verschlimmerungen zu erwarten hat kann man mit einem ungefährem Ende der Pandemie spätestens Ende des Jahres 2021 rechnen.
 
 \begin{thebibliography}{99}
 \bibitem{januar} 
@@ -424,5 +445,6 @@ Machen wir sowas überhaupt?
 \bibitem{juni} 
 \textit{Täglicher Lagebericht des RKIzur Coronavirus-Krankheit-2019(COVID-19)}, Robert Koch Institut, \url{https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Jun_2021/2021-06-01-de.pdf?__blob=publicationFile}, Stand: 06.06.2021.
  
-
+\bibitem{lockerungenmaerz}
+\url{https://www.bundesregierung.de/breg-de/themen/coronavirus/bund-laender-beschluss-1872126}
 \end{thebibliography}
