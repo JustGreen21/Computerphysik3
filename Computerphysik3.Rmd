@@ -406,7 +406,7 @@ lines(hypothesex,hypotheseI,"l", col = " red")
 legend(270,3e5,legend=c("realer Verlauf für h = 1","realer Verlauf für h = 2","realer Verlauf für h = 0,5","realer Verlauf für h = 0,01","alternativer Verlauf"), col = c("dark blue","green","black","gray","red"), lty=1:1)
 ```
 
-Wie recht einfach an Abb. \ref{wahrerVerlauf} zu sehen ist, wirkt sich die Schrittweite $h$ nicht sehr stark auf die Projektion des Verlaufes für das restliche Jahr aus.
+Wie recht einfach an Abb. \ref{fig:wahrerVerlauf} zu sehen ist, wirkt sich die Schrittweite $h$ nicht sehr stark auf die Projektion des Verlaufes für das restliche Jahr aus.
 Falls das $h$ jedoch noch größer gewählt werden würde, wäre der Verlauf nicht mehr unbedingt repräsentativ, da die genutzten Daten einen gewissen Abstand (weniger als 40 Tage) haben und die benutzte Datenmenge an sich schon recht knapp ist.
 Diese geringe Abhängigkeit von $h$ zeigt jedoch, dass das genutzte Runge-Kutter Verfahren ein stabiles Verfahren ist, welches gute Werte produziert.
 
